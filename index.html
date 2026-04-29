@@ -2,9 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EcoScan">
+<meta name="theme-color" content="#2d6a0f">
+<meta name="format-detection" content="telephone=no">
 <title>EcoScan</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -40,27 +44,57 @@
   --serif:'DM Serif Display',serif;
   --rad:12px;--radl:18px;--radxl:22px;
   --sh:0 2px 8px rgba(0,0,0,0.08);--shl:0 8px 32px rgba(0,0,0,0.18);
-  --mob-nav:64px;--sidebar:220px;
+  --mob-nav:70px;--sidebar:220px;
+  /* Safe area insets for notch devices */
+  --safe-t:env(safe-area-inset-top,0px);
   --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px);
+  --safe-r:env(safe-area-inset-right,0px);
 }
-html,body{height:100%;-webkit-tap-highlight-color:transparent;}
-body{font-family:var(--fn);background:#dfe8d4;min-height:100vh;display:flex;overflow-x:hidden;}
+
+/* BASE — prevent overscroll bounce on iOS except scroll containers */
+html{
+  height:100%;
+  overflow:hidden;
+  /* Prevent iOS text size adjust on rotation */
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+body{
+  font-family:var(--fn);
+  background:#dfe8d4;
+  min-height:100%;
+  height:100%;
+  display:flex;
+  overflow:hidden;
+  /* Prevent pull-to-refresh interfering with game */
+  overscroll-behavior:none;
+  -webkit-tap-highlight-color:transparent;
+  /* Prevent accidental text selection on tap */
+  -webkit-user-select:none;
+  user-select:none;
+}
+/* Re-enable selection only where needed */
+input,textarea,p,.bin-card-desc,.ac-quote,.guide-tip-body,.dp-body,.pc-desc{
+  -webkit-user-select:text;
+  user-select:text;
+}
 
 /* SIDEBAR */
-.sidebar{width:var(--sidebar);min-height:100vh;background:#fff;border-right:1px solid var(--gray2);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;box-shadow:var(--sh);}
+.sidebar{width:var(--sidebar);min-height:100%;background:#fff;border-right:1px solid var(--gray2);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:var(--sh);}
 .brand{padding:22px 18px 18px;border-bottom:1px solid var(--gray1);}
 .brand-logo{font-size:1.35rem;font-weight:900;color:var(--g8);display:flex;align-items:center;gap:8px;letter-spacing:-0.02em;}
 .brand-tag{font-size:0.65rem;color:var(--gray5);font-weight:700;margin-top:2px;text-transform:uppercase;letter-spacing:0.06em;}
 .nav-sec{padding:14px 10px;flex:1;}
 .nav-sec-lbl{font-size:0.62rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray3);padding:0 8px;margin-bottom:5px;margin-top:12px;}
 .nav-sec-lbl:first-child{margin-top:0;}
-.nav-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--rad);cursor:pointer;margin-bottom:2px;font-size:0.87rem;font-weight:700;color:var(--gray7);border:none;background:transparent;width:100%;text-align:left;transition:background 0.15s;}
+.nav-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--rad);cursor:pointer;margin-bottom:2px;font-size:0.87rem;font-weight:700;color:var(--gray7);border:none;background:transparent;width:100%;text-align:left;transition:background 0.15s;min-height:44px;touch-action:manipulation;}
 .nav-link:hover{background:var(--gray0);}
 .nav-link.active{background:var(--g1);color:var(--g8);}
 .nav-link.active .ni{background:var(--g8);color:#fff;}
 .ni{width:30px;height:30px;border-radius:8px;background:var(--gray1);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
 .sb-foot{padding:14px;border-top:1px solid var(--gray1);}
-.user-chip{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--gray0);border-radius:var(--rad);cursor:pointer;transition:background 0.15s;}
+.user-chip{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--gray0);border-radius:var(--rad);cursor:pointer;transition:background 0.15s;min-height:44px;touch-action:manipulation;}
 .user-chip:hover{background:var(--gray1);}
 .ava{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--g6),var(--g4));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;}
 .user-chip-text{flex:1;min-width:0;}
@@ -68,27 +102,168 @@ body{font-family:var(--fn);background:#dfe8d4;min-height:100vh;display:flex;over
 .uc-label{font-size:10px;color:var(--gray5);font-weight:600;}
 
 /* MAIN */
-.main{flex:1;min-height:100vh;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:rgba(255,255,255,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--gray2);position:sticky;top:0;z-index:5000;}
+.main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  /* Full height accounting for safe areas */
+  min-height:100%;
+}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 24px;
+  padding-left:max(24px, calc(var(--safe-l) + 16px));
+  padding-right:max(24px, calc(var(--safe-r) + 16px));
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--gray2);
+  position:sticky;top:0;z-index:5000;
+}
 .tb-title{font-size:1.05rem;font-weight:800;color:var(--gray9);}
 .tb-pts{display:flex;align-items:center;gap:6px;background:var(--g1);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:800;color:var(--g8);}
-.content{padding:20px 24px;flex:1;padding-bottom:calc(20px + var(--mob-nav) + var(--safe-b));}
+.content{
+  padding:20px 24px;
+  padding-left:max(24px, calc(var(--safe-l) + 16px));
+  padding-right:max(24px, calc(var(--safe-r) + 16px));
+  flex:1;
+  /* bottom padding = nav bar height + safe area + extra breathing room */
+  padding-bottom:calc(var(--mob-nav) + var(--safe-b) + 24px);
+}
 
 /* PAGES */
-.page{display:none;animation:fadeIn 0.18s ease;}
+.page{display:none;animation:fadeIn 0.2s ease;}
 .page.active{display:block;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 
-/* MOBILE BOTTOM NAV */
-.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--gray2);z-index:6000;padding-bottom:var(--safe-b);}
-.mob-nav-inner{display:flex;justify-content:space-around;}
-.mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 4px;border:none;background:transparent;cursor:pointer;font-family:var(--fn);-webkit-tap-highlight-color:transparent;}
-.mob-nav-btn:active{background:var(--gray0);}
-.mob-nav-icon{font-size:20px;line-height:1;}
-.mob-nav-lbl{font-size:10px;font-weight:700;color:var(--gray5);}
-.mob-nav-btn.active .mob-nav-lbl{color:var(--g6);}
-.mob-nav-dot{width:4px;height:4px;border-radius:50%;background:transparent;margin-top:1px;}
-.mob-nav-btn.active .mob-nav-dot{background:var(--g6);}
+/* ═══════════════════════════════════════════
+   MOBILE BOTTOM NAV — complete redesign
+   Larger tap targets, pill active indicator,
+   "More" overflow for extra pages
+═══════════════════════════════════════════ */
+.mob-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  background:#fff;
+  border-top:1px solid rgba(0,0,0,0.08);
+  z-index:6000;
+  /* Safe area bottom padding for home indicator (iPhone) */
+  padding-bottom:var(--safe-b);
+  padding-left:var(--safe-l);
+  padding-right:var(--safe-r);
+  /* Frosted glass effect */
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  background:rgba(255,255,255,0.96);
+  box-shadow:0 -1px 0 rgba(0,0,0,0.06), 0 -8px 32px rgba(0,0,0,0.06);
+}
+.mob-nav-inner{
+  display:flex;
+  justify-content:space-around;
+  align-items:stretch;
+  height:var(--mob-nav);
+  /* Prevent scroll on the nav bar itself */
+  touch-action:none;
+}
+.mob-nav-btn{
+  flex:1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;
+  padding:8px 2px;
+  border:none;background:transparent;cursor:pointer;
+  font-family:var(--fn);
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  /* Minimum touch target: 44×44pt per Apple HIG */
+  min-width:44px;
+  position:relative;
+  transition:transform 0.1s;
+  border-radius:0;
+  outline:none;
+}
+/* Ripple-like press feedback */
+.mob-nav-btn:active{transform:scale(0.9);}
+
+.mob-nav-icon-wrap{
+  position:relative;
+  width:44px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:16px;
+  transition:background 0.2s, transform 0.2s;
+}
+/* Active pill background */
+.mob-nav-btn.active .mob-nav-icon-wrap{
+  background:var(--g1);
+  transform:translateY(-2px);
+}
+.mob-nav-icon{
+  font-size:22px;
+  line-height:1;
+  transition:transform 0.2s;
+}
+.mob-nav-btn.active .mob-nav-icon{
+  transform:scale(1.08);
+}
+.mob-nav-lbl{
+  font-size:10px;font-weight:700;
+  color:var(--gray3);
+  letter-spacing:0.01em;
+  transition:color 0.2s, font-weight 0.2s;
+  line-height:1;
+}
+.mob-nav-btn.active .mob-nav-lbl{
+  color:var(--g8);
+  font-weight:900;
+}
+
+/* Badge for "More" button unread indicator */
+.mob-nav-badge{
+  position:absolute;top:4px;right:6px;
+  width:8px;height:8px;border-radius:50%;
+  background:var(--r6);
+  border:2px solid #fff;
+  display:none;
+}
+.mob-nav-badge.visible{display:block;}
+
+/* MORE DRAWER — slides up from bottom */
+.more-drawer{
+  position:fixed;bottom:0;left:0;right:0;
+  background:#fff;
+  border-radius:20px 20px 0 0;
+  box-shadow:0 -4px 40px rgba(0,0,0,0.18);
+  z-index:6500;
+  transform:translateY(100%);
+  transition:transform 0.32s cubic-bezier(0.34,1.1,0.64,1);
+  padding-bottom:calc(var(--safe-b) + 8px);
+  padding-left:var(--safe-l);
+  padding-right:var(--safe-r);
+}
+.more-drawer.open{transform:translateY(0);}
+.more-drawer-handle{width:36px;height:4px;border-radius:4px;background:var(--gray2);margin:12px auto 16px;}
+.more-drawer-title{font-size:0.72rem;font-weight:800;color:var(--gray5);text-transform:uppercase;letter-spacing:0.1em;padding:0 20px;margin-bottom:10px;}
+.more-drawer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:0 12px 8px;}
+.more-drawer-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  padding:14px 4px;border-radius:14px;border:none;background:transparent;
+  cursor:pointer;font-family:var(--fn);
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:background 0.15s;
+}
+.more-drawer-item:active{background:var(--gray0);}
+.more-drawer-item.active-page{background:var(--g1);}
+.more-drawer-icon{font-size:26px;line-height:1;}
+.more-drawer-lbl{font-size:11px;font-weight:800;color:var(--gray7);text-align:center;}
+.more-drawer-item.active-page .more-drawer-lbl{color:var(--g8);}
+/* Backdrop for more drawer */
+.more-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,0.35);
+  z-index:6400;opacity:0;pointer-events:none;
+  transition:opacity 0.25s;
+}
+.more-backdrop.open{opacity:1;pointer-events:all;}
 
 /* HERO */
 .hero{background:linear-gradient(135deg,var(--g9),var(--g6));border-radius:var(--radl);padding:22px 24px;margin-bottom:18px;position:relative;overflow:hidden;}
@@ -691,15 +866,24 @@ body{font-family:var(--fn);background:#dfe8d4;min-height:100vh;display:flex;over
 /* RESPONSIVE */
 @media(max-width:767px){
   .sidebar{display:none;}
-  .mob-nav{display:flex;}
-  .content{padding:16px 16px calc(16px + var(--mob-nav) + var(--safe-b));}
-  .topbar{padding:14px 16px;}
-  .hero{padding:18px;}
-  .hero-pts-big{font-size:2.2rem;}
-  .hero-name{font-size:1.3rem;}
+  .mob-nav{display:flex;flex-direction:column;}
+  .content{
+    padding:14px 16px;
+    padding-left:max(16px, calc(var(--safe-l) + 12px));
+    padding-right:max(16px, calc(var(--safe-r) + 12px));
+    padding-bottom:calc(var(--mob-nav) + var(--safe-b) + 20px);
+  }
+  .topbar{
+    padding:12px 16px;
+    padding-left:max(16px, calc(var(--safe-l) + 12px));
+    padding-right:max(16px, calc(var(--safe-r) + 12px));
+  }
+  .hero{padding:16px;}
+  .hero-pts-big{font-size:2rem;}
+  .hero-name{font-size:1.2rem;}
   .stats-row{grid-template-columns:1fr 1fr;}
   .scan-cols,.rew-grid{grid-template-columns:1fr;}
-  .toast{bottom:calc(var(--mob-nav) + 8px + var(--safe-b));}
+  .toast{bottom:calc(var(--mob-nav) + var(--safe-b) + 10px);}
   .full-col{grid-column:auto;}
   .lb-controls{flex-direction:column;}
   .lb-scope-bar{min-width:unset;}
@@ -711,12 +895,18 @@ body{font-family:var(--fn);background:#dfe8d4;min-height:100vh;display:flex;over
   .pod-avatar-3{width:40px;height:40px;font-size:14px;}
   .amb-grid{grid-template-columns:1fr;}
   .partner-grid{grid-template-columns:1fr;}
-  .section-hero{padding:24px 20px;}
-  .sh-title{font-size:1.55rem;}
+  .section-hero{padding:20px 16px;}
+  .sh-title{font-size:1.4rem;}
   .pc-cta-btn{display:none;}
+  /* Game on mobile */
+  #game-layout{grid-template-columns:1fr!important;}
+  #g-field{height:260px!important;}
+  /* Map on mobile */
+  #map-layout{grid-template-columns:1fr!important;}
+  #th-map{height:380px!important;}
 }
 @media(min-width:768px){
-  .content{padding:24px 28px;}
+  .content{padding:24px 28px;padding-bottom:40px;}
   .overlay{align-items:center;}
   .modal{border-radius:22px;max-width:440px;padding:28px 32px;}
   .m-handle{display:none;}
@@ -726,6 +916,15 @@ body{font-family:var(--fn);background:#dfe8d4;min-height:100vh;display:flex;over
 @media(min-width:1024px){
   .scan-cols{grid-template-columns:1fr 1fr;}
   .rew-grid{grid-template-columns:1fr 1fr;}
+}
+/* Very small phones */
+@media(max-width:374px){
+  .mob-nav-lbl{font-size:9px;}
+  .mob-nav-icon{font-size:20px;}
+  .hero-pts-big{font-size:1.8rem;}
+  .hero-name{font-size:1.1rem;}
+  .hchip{min-width:68px;padding:8px 10px;}
+  .hchip-val{font-size:1rem;}
 }
 /* ═══ GAME PAGE ═══ */
 @keyframes bounce{from{transform:translateY(0);}to{transform:translateY(-12px);}}
@@ -1540,15 +1739,67 @@ body{font-family:var(--fn);background:#dfe8d4;min-height:100vh;display:flex;over
 </main>
 
 <!-- MOBILE BOTTOM NAV -->
-<nav class="mob-nav">
+<nav class="mob-nav" id="mob-nav">
   <div class="mob-nav-inner">
-    <button class="mob-nav-btn active" id="m-nav-home" onclick="navM('home');nav('home',document.getElementById('d-nav-home'))"><div class="mob-nav-icon">🏠</div><div class="mob-nav-lbl">Home</div><div class="mob-nav-dot"></div></button>
-    <button class="mob-nav-btn" id="m-nav-scan" onclick="navM('scan');nav('scan',document.getElementById('d-nav-scan'))"><div class="mob-nav-icon">📷</div><div class="mob-nav-lbl">Scan</div><div class="mob-nav-dot"></div></button>
-    <button class="mob-nav-btn" id="m-nav-game" onclick="navM('game');nav('game',document.getElementById('d-nav-game'))"><div class="mob-nav-icon">🎮</div><div class="mob-nav-lbl">Game</div><div class="mob-nav-dot"></div></button>
-    <button class="mob-nav-btn" id="m-nav-rewards" onclick="navM('rewards');nav('rewards',document.getElementById('d-nav-rewards'))"><div class="mob-nav-icon">🏆</div><div class="mob-nav-lbl">Rewards</div><div class="mob-nav-dot"></div></button>
-    <button class="mob-nav-btn" id="m-nav-leaderboard" onclick="navM('leaderboard');nav('leaderboard',document.getElementById('d-nav-leaderboard'))"><div class="mob-nav-icon">📊</div><div class="mob-nav-lbl">Ranks</div><div class="mob-nav-dot"></div></button>
+    <button class="mob-nav-btn active" id="m-nav-home" onclick="navM('home');nav('home',document.getElementById('d-nav-home'))" aria-label="Home">
+      <div class="mob-nav-icon-wrap"><div class="mob-nav-icon">🏠</div></div>
+      <div class="mob-nav-lbl">Home</div>
+    </button>
+    <button class="mob-nav-btn" id="m-nav-scan" onclick="navM('scan');nav('scan',document.getElementById('d-nav-scan'))" aria-label="Scan">
+      <div class="mob-nav-icon-wrap"><div class="mob-nav-icon">📷</div></div>
+      <div class="mob-nav-lbl">Scan</div>
+    </button>
+    <button class="mob-nav-btn" id="m-nav-game" onclick="navM('game');nav('game',document.getElementById('d-nav-game'))" aria-label="Game">
+      <div class="mob-nav-icon-wrap"><div class="mob-nav-icon">🎮</div></div>
+      <div class="mob-nav-lbl">Game</div>
+    </button>
+    <button class="mob-nav-btn" id="m-nav-rewards" onclick="navM('rewards');nav('rewards',document.getElementById('d-nav-rewards'))" aria-label="Rewards">
+      <div class="mob-nav-icon-wrap"><div class="mob-nav-icon">🏆</div></div>
+      <div class="mob-nav-lbl">Rewards</div>
+    </button>
+    <button class="mob-nav-btn" id="m-nav-more" onclick="openMoreDrawer()" aria-label="More">
+      <div class="mob-nav-icon-wrap"><div class="mob-nav-icon">⋯</div></div>
+      <div class="mob-nav-lbl">More</div>
+    </button>
   </div>
 </nav>
+
+<!-- MORE DRAWER -->
+<div class="more-backdrop" id="more-backdrop" onclick="closeMoreDrawer()"></div>
+<div class="more-drawer" id="more-drawer">
+  <div class="more-drawer-handle"></div>
+  <div class="more-drawer-title">More pages</div>
+  <div class="more-drawer-grid">
+    <button class="more-drawer-item" id="md-leaderboard" onclick="moreNavTo('leaderboard')" aria-label="Leaderboard">
+      <div class="more-drawer-icon">📊</div>
+      <div class="more-drawer-lbl">Leaderboard</div>
+    </button>
+    <button class="more-drawer-item" id="md-map" onclick="moreNavTo('map')" aria-label="Bin Map">
+      <div class="more-drawer-icon">🗺️</div>
+      <div class="more-drawer-lbl">Bin Map</div>
+    </button>
+    <button class="more-drawer-item" id="md-guide" onclick="moreNavTo('guide')" aria-label="Sorting Guide">
+      <div class="more-drawer-icon">📗</div>
+      <div class="more-drawer-lbl">Guide</div>
+    </button>
+    <button class="more-drawer-item" id="md-partnerships" onclick="moreNavTo('partnerships')" aria-label="Partnerships">
+      <div class="more-drawer-icon">🤝</div>
+      <div class="more-drawer-lbl">Partners</div>
+    </button>
+    <button class="more-drawer-item" id="md-ambassador" onclick="moreNavTo('ambassador')" aria-label="Ambassador">
+      <div class="more-drawer-icon">🧐</div>
+      <div class="more-drawer-lbl">Personas</div>
+    </button>
+    <button class="more-drawer-item" onclick="closeMoreDrawer();openAuth()" aria-label="Account">
+      <div class="more-drawer-icon">👤</div>
+      <div class="more-drawer-lbl">Account</div>
+    </button>
+    <button class="more-drawer-item" onclick="closeMoreDrawer();openDebug()" aria-label="Settings">
+      <div class="more-drawer-icon">⚙️</div>
+      <div class="more-drawer-lbl">Debug</div>
+    </button>
+  </div>
+</div>
 
 <!-- CONFIRM MODAL -->
 <div class="overlay" id="modal">
@@ -1780,7 +2031,7 @@ const VALIDITY_MS=7*24*60*60*1000,GRACE_MS=5*24*60*60*1000,TOTAL_MS=VALIDITY_MS+
 const STORAGE_KEY='ecoscan_vouchers_v2',POINTS_KEY='ecoscan_points_v2',APIKEY_KEY='ecoscan_apikey_v1';
 const ACCOUNTS_KEY='ecoscan_accounts_v1',SESSION_KEY='ecoscan_session_v1';
 
-function getApiKey(){return "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";}
+function getApiKey(){return localStorage.getItem(APIKEY_KEY)||'';}
 function setApiKey(k){localStorage.setItem(APIKEY_KEY,k.trim());}
 
 /* ── ACCOUNTS ───────────────────────────── */
@@ -2071,8 +2322,39 @@ function nav(id,btn){
   if(id==='map')setTimeout(initMap,80);
 }
 function navM(id){
+  // Primary nav buttons
+  const primaryIds=['home','scan','game','rewards'];
+  const moreIds=['leaderboard','map','guide','partnerships','ambassador'];
   document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
-  const b=document.getElementById('m-nav-'+id);if(b)b.classList.add('active');
+  if(primaryIds.includes(id)){
+    const b=document.getElementById('m-nav-'+id);
+    if(b)b.classList.add('active');
+  } else {
+    // If it's a "more" page, highlight the More button
+    const moreBtn=document.getElementById('m-nav-more');
+    if(moreBtn)moreBtn.classList.add('active');
+  }
+  // Update more drawer active item
+  document.querySelectorAll('.more-drawer-item').forEach(b=>b.classList.remove('active-page'));
+  const mdEl=document.getElementById('md-'+id);
+  if(mdEl)mdEl.classList.add('active-page');
+}
+
+function openMoreDrawer(){
+  document.getElementById('more-drawer').classList.add('open');
+  document.getElementById('more-backdrop').classList.add('open');
+  // Prevent scroll behind drawer on iOS
+  document.body.style.overflow='hidden';
+}
+function closeMoreDrawer(){
+  document.getElementById('more-drawer').classList.remove('open');
+  document.getElementById('more-backdrop').classList.remove('open');
+  document.body.style.overflow='';
+}
+function moreNavTo(id){
+  closeMoreDrawer();
+  nav(id,document.getElementById('d-nav-'+id));
+  navM(id);
 }
 function scrollToBin(id,btn){
   document.querySelectorAll('.guide-pill').forEach(p=>p.classList.remove('active'));
@@ -2158,7 +2440,7 @@ function showNotDetected(reason){
   ['bin-compost','bin-recycle','bin-landfill','bin-general','bin-ewaste'].forEach(id=>document.getElementById(id).classList.remove('active'));
 }
 
-const SCAN_COOLDOWN_MS=10,MAX_RPM=20,RPM_WINDOW_MS=60000,MAX_RPD=14000;
+const SCAN_COOLDOWN_MS=10000,MAX_RPM=20,RPM_WINDOW_MS=60000,MAX_RPD=14000;
 let lastScanAt=0,scanCooldownTimer=null;
 const requestLog=[];
 const DAILY_KEY='ecoscan_daily_v1';
@@ -2850,6 +3132,20 @@ function gameOver(){
 // init display
 setTimeout(gameUpdateBestDisp,150);
 
+/* ── SWIPE TO CLOSE MORE DRAWER ─────────── */
+(function(){
+  let startY=0,startTime=0;
+  const drawer=document.getElementById('more-drawer');
+  if(!drawer)return;
+  drawer.addEventListener('touchstart',e=>{startY=e.touches[0].clientY;startTime=Date.now();},{passive:true});
+  drawer.addEventListener('touchend',e=>{
+    const dy=e.changedTouches[0].clientY-startY;
+    const dt=Date.now()-startTime;
+    // swipe down fast enough = close
+    if(dy>60&&dt<400)closeMoreDrawer();
+  },{passive:true});
+})();
+
 /* ── INIT ────────────────────────────────── */
 (function init(){
   loadUserState();
@@ -2866,6 +3162,23 @@ setTimeout(gameUpdateBestDisp,150);
   updateScanApiStatus();
   renderLB();
   buildAvatarPicker();
+
+  // Prevent double-tap zoom on iOS (but keep tap)
+  let lastTap=0;
+  document.addEventListener('touchend',function(e){
+    const now=Date.now();
+    if(now-lastTap<300&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){
+      e.preventDefault();
+    }
+    lastTap=now;
+  },{passive:false});
+
+  // Prevent pinch zoom on the game field
+  const gf=document.getElementById('g-field');
+  if(gf){
+    gf.addEventListener('touchstart',e=>{if(e.touches.length>1)e.preventDefault();},{passive:false});
+    gf.addEventListener('touchmove',e=>{e.preventDefault();},{passive:false});
+  }
 })();
 </script>
 
