@@ -3969,6 +3969,15 @@ function dbgClearAllBins(){
   showToast('🗑️','All bins cleared');
   dbgLog('All map bins cleared','warn');
 }
+
+async function fetchData() {
+  const res = await fetch( 'project-ewv86.vercel.app' );
+  const data = await res.json();
+  console.log(data);
+}
+
+console.log( fetchData() );
+
 </script>
 </body>
 </html>
