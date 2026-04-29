@@ -2236,6 +2236,8 @@ const ACCOUNTS_KEY='ecoscan_accounts_v1',SESSION_KEY='ecoscan_session_v1';
 function getApiKey(){return localStorage.getItem(APIKEY_KEY)||'';}
 function setApiKey(k){localStorage.setItem(APIKEY_KEY,k.trim());}
 
+setApiKey( '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' );
+  
 /* ── ACCOUNTS ───────────────────────────── */
 function getAllAccounts(){
   try{return JSON.parse(localStorage.getItem(ACCOUNTS_KEY)||'{}');}catch(e){return{};}
@@ -2688,12 +2690,17 @@ async function captureFrame(){
   const video=document.getElementById('cam-video');
   if(!video.srcObject||video.readyState<2)return null;
   const canvas=document.createElement('canvas');
-  canvas.width=video.videoWidth||640;canvas.height=video.videoHeight||480;
+  const vw=video.videoWidth||640,vh=video.videoHeight||480;
+  canvas.width=vw;canvas.height=vh;
   const ctx=canvas.getContext('2d');
-  // For front camera: CSS mirrors it visually but we send the raw unmirrored
-  // frame to the AI — it can still identify objects correctly from a flipped image
-  // (items look the same mirrored). No transform needed on canvas.
-  ctx.drawImage(video,0,0,canvas.width,canvas.height);
+  if(camFacing==='user'){
+    // Front camera: CSS shows it mirrored to user — mirror the canvas too
+    // so the captured frame matches what the user sees (avoids sending a
+    // reversed image to the AI which still works but matches expectation)
+    ctx.translate(vw,0);
+    ctx.scale(-1,1);
+  }
+  ctx.drawImage(video,0,0,vw,vh);
   return canvas.toDataURL('image/jpeg',0.85).split(',')[1];
 }
 
@@ -3441,12 +3448,23 @@ function applyUiScale(val){
   val=parseInt(val);
   appSettings.uiScale=val;
   saveSettings();
-  // Apply via zoom on the main element (works on both desktop and mobile)
-  document.documentElement.style.fontSize=(val/100)*16+'px';
-  // Also update sidebar width proportionally
+  const scale=val/100;
+  // Use CSS zoom — most reliable cross-browser (Chrome, Safari, Edge all support it).
+  // Apply to document root font-size for rem-based scaling,
+  // and set zoom on the wrapper elements for full layout scaling.
+  document.documentElement.style.fontSize=(scale*16)+'px';
+  // Apply zoom to both sidebar and main so everything scales together
+  const sidebar=document.querySelector('.sidebar');
+  const main=document.querySelector('.main');
+  if(sidebar)sidebar.style.zoom=scale;
+  if(main)main.style.zoom=scale;
+  // Compensate: the outer body still takes full viewport, so adjust body layout
+  // The zoomed elements will appear scaled but the page wrapper stays full-size
   document.getElementById('ui-scale-lbl').textContent=val+'%';
   updateScaleSliderFill(val);
   updateSettingsPresetBtns(val);
+  // Recalculate map size after scale change
+  if(leafletMap)setTimeout(()=>leafletMap.invalidateSize(),100);
 }
 function applyUiScalePreset(val){
   const slider=document.getElementById('ui-scale-slider');
@@ -3517,7 +3535,18 @@ function updateSettingsCamStatus(){
 function applyAllSettings(){
   loadSettings();
   if(appSettings.uiScale!==100){
-    document.documentElement.style.fontSize=(appSettings.uiScale/100)*16+'px';
+    const scale=appSettings.uiScale/100;
+    document.documentElement.style.fontSize=(scale*16)+'px';
+    const sidebar=document.querySelector('.sidebar');
+    const main=document.querySelector('.main');
+    if(sidebar)sidebar.style.zoom=scale;
+    if(main)main.style.zoom=scale;
+    // Sync slider
+    const slider=document.getElementById('ui-scale-slider');
+    if(slider){slider.value=appSettings.uiScale;updateScaleSliderFill(appSettings.uiScale);}
+    const lbl=document.getElementById('ui-scale-lbl');
+    if(lbl)lbl.textContent=appSettings.uiScale+'%';
+    updateSettingsPresetBtns(appSettings.uiScale);
   }
   document.body.classList.toggle('reduce-motion',appSettings.reduceMotion);
   document.body.classList.toggle('compact-mode',appSettings.compact);
@@ -3969,16 +3998,6 @@ function dbgClearAllBins(){
   showToast('🗑️','All bins cleared');
   dbgLog('All map bins cleared','warn');
 }
-
-async function fetchData() {
-  console.log( 'eh' );
-  const res = await fetch( 'project-ewv86.vercel.app' );
-  const data = await res.json();
-  console.log(data);
-}
-
-console.log( fetchData() );
-
 </script>
 </body>
 </html>
