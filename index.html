@@ -3971,6 +3971,7 @@ function dbgClearAllBins(){
 }
 
 async function fetchData() {
+  console.log( 'eh' );
   const res = await fetch( 'project-ewv86.vercel.app' );
   const data = await res.json();
   console.log(data);
