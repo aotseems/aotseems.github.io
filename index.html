@@ -2129,10 +2129,21 @@ body.reduce-motion *,body.reduce-motion *::before,body.reduce-motion *::after{
       <hr class="dbg-divider">
       <div>
         <div class="dbg-sec-title">🔑 Groq API key</div>
+        <!-- Proxy status row — shown when Vercel proxy is detected -->
+        <div id="dbg-proxy-row" style="display:none;background:rgba(140,198,63,0.12);border:1px solid rgba(140,198,63,0.25);border-radius:10px;padding:10px 12px;margin-bottom:8px;">
+          <div style="font-size:0.72rem;font-weight:800;color:#8cc63f;margin-bottom:3px;">✅ Vercel proxy active</div>
+          <div style="font-size:0.65rem;color:rgba(255,255,255,0.5);line-height:1.5;">Key is set via <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px;">GROQ_API_KEY</code> env var in Vercel — never exposed to the browser. Local key field below is ignored.</div>
+          <button onclick="checkProxyHealth()" style="margin-top:7px;background:rgba(255,255,255,0.1);border:none;border-radius:6px;padding:5px 10px;font-family:var(--fn);font-size:0.68rem;font-weight:800;color:rgba(255,255,255,0.75);cursor:pointer;">🔍 Test connection</button>
+        </div>
+        <!-- Local key fallback — shown when no proxy, or always visible for override -->
         <div class="dbg-edit-row" style="flex-direction:column;align-items:stretch;gap:8px;">
+          <div style="font-size:0.62rem;color:rgba(255,255,255,0.35);margin-bottom:2px;" id="dbg-key-mode-lbl">Local fallback key (used when no server proxy)</div>
           <input class="dbg-edit-input" id="dbg-apikey-input" type="password" placeholder="gsk_…" style="width:100%;text-align:left;font-size:0.72rem;" oninput="updateApiKeyStatus()">
-          <div style="display:flex;gap:8px;"><button class="dbg-apply-btn" style="flex:1;" onclick="applyApiKey()">Save key</button><button class="dbg-apply-btn" style="flex:1;background:var(--r6);" onclick="clearApiKey()">Clear</button></div>
-          <div id="dbg-apikey-status" style="font-size:0.68rem;font-weight:700;padding:4px 0;"></div>
+          <div style="display:flex;gap:8px;">
+            <button class="dbg-apply-btn" style="flex:1;" onclick="applyApiKey()">Save key</button>
+            <button class="dbg-apply-btn" style="flex:1;background:var(--r6);" onclick="clearApiKey()">Clear</button>
+          </div>
+          <div id="dbg-apikey-status" style="font-size:0.68rem;font-weight:700;padding:2px 0;"></div>
         </div>
       </div>
       <hr class="dbg-divider">
@@ -2236,8 +2247,7 @@ const ACCOUNTS_KEY='ecoscan_accounts_v1',SESSION_KEY='ecoscan_session_v1';
 function getApiKey(){return localStorage.getItem(APIKEY_KEY)||'';}
 function setApiKey(k){localStorage.setItem(APIKEY_KEY,k.trim());}
 
-setApiKey( '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' );
-  
+  setApiKey( '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' );
 /* ── ACCOUNTS ───────────────────────────── */
 function getAllAccounts(){
   try{return JSON.parse(localStorage.getItem(ACCOUNTS_KEY)||'{}');}catch(e){return{};}
@@ -2739,13 +2749,73 @@ function startCooldownUI(){
 }
 
 async function classifyWithRetry(base64,retries=1){
-  const key=getApiKey(),url='https://api.groq.com/openai/v1/chat/completions',model='meta-llama/llama-4-scout-17b-16e-instruct';
   const prompt=`You are a waste classification assistant.\nLook at the image and identify if there is a clear piece of trash or waste item visible.\nReply ONLY with valid JSON, no markdown.\nIf a waste item IS clearly visible:\n{"detected":true,"item":"short name","category":"plastic|paper|glass|metal|food|organic|cardboard|textile|electronic|battery|hazardous|general","bin":"recycle|compost|landfill|general|ewaste","confidence":"high|medium|low","reason":"one sentence why"}\nNote: electronics/batteries/cables must use bin "ewaste". Multi-material bonded items use "general".\nIf NO clear waste item is visible:\n{"detected":false,"reason":"one sentence describing what you see"}`;
+
+  // ── Strategy: try Vercel proxy first (/api/scan), fall back to direct Groq ──
+  // When deployed on Vercel, the proxy reads GROQ_API_KEY from env vars (key
+  // never reaches the browser). When opened as a plain HTML file, the proxy
+  // returns 404 so we fall back to the locally-stored key.
+  const useProxy=await _proxyAvailable();
+
+  if(useProxy){
+    return _callProxy(base64,retries);
+  } else {
+    const key=getApiKey();
+    if(!key)throw new Error('no_key');
+    return _callGroqDirect(base64,key,prompt,retries);
+  }
+}
+
+// Cache proxy availability so we only check once per page load
+let _proxyCached=null;
+async function _proxyAvailable(){
+  if(_proxyCached!==null)return _proxyCached;
+  try{
+    const r=await fetch('/api/scan',{method:'OPTIONS'});
+    // A real proxy returns 204; a static file server returns 404/405
+    _proxyCached=(r.status===204||r.status===200||r.status===405);
+    // 405 = Method Not Allowed but route exists — proxy is there
+    // 404 = no proxy (plain file server)
+    if(r.status===404)_proxyCached=false;
+  }catch(e){_proxyCached=false;}
+  return _proxyCached;
+}
+
+async function _callProxy(base64,retries){
+  let res;
+  try{
+    res=await fetch('/api/scan',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image:base64}),
+    });
+  }catch(e){throw new Error(`Network error: ${e.message}`);}
+  if(res.status===429){
+    const body=await res.json().catch(()=>({}));
+    const wait=(body.retryAfter||30)*1000;
+    if(retries<=0)throw new Error('API rate limited');
+    await new Promise(r=>setTimeout(r,wait));
+    return _callProxy(base64,retries-1);
+  }
+  if(res.status===503){
+    const b=await res.json().catch(()=>({}));
+    throw new Error(b.error||'AI service not configured on server');
+  }
+  if(!res.ok){
+    const b=await res.json().catch(()=>({}));
+    throw new Error(`Proxy ${res.status}: ${b.error||res.statusText}`);
+  }
+  return res.json();
+}
+
+async function _callGroqDirect(base64,key,prompt,retries){
+  const url='https://api.groq.com/openai/v1/chat/completions';
+  const model='meta-llama/llama-4-scout-17b-16e-instruct';
   const body={model,messages:[{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${base64}`,detail:'low'}},{type:'text',text:prompt}]}],temperature:0.1,max_tokens:256,response_format:{type:'json_object'}};
   let res;
   try{res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},body:JSON.stringify(body)});}
   catch(e){throw new Error(`Network error: ${e.message}`);}
-  if(res.status===429){const backoff=parseInt(res.headers.get('Retry-After')||'0')*1000||30000;if(retries<=0){throw new Error('API rate limited');}await new Promise(r=>setTimeout(r,backoff));return classifyWithRetry(base64,retries-1);}
+  if(res.status===429){const backoff=parseInt(res.headers.get('Retry-After')||'0')*1000||30000;if(retries<=0)throw new Error('API rate limited');await new Promise(r=>setTimeout(r,backoff));return _callGroqDirect(base64,key,prompt,retries-1);}
   if(res.status===401)throw new Error('API 401: Invalid Groq API key');
   if(!res.ok){const eb=await res.json().catch(()=>({}));throw new Error(`API ${res.status}: ${eb?.error?.message||res.statusText}`);}
   const data=await res.json();
@@ -2770,7 +2840,12 @@ async function doScan(){
   try{
     const base64=await captureFrame();
     if(!base64)throw new Error('no_camera');
-    if(!getApiKey()){showNotDetected('No API key — open ⚙️ Debug panel to add your Groq key');showToast('🔑','No Groq key — add one in Debug panel');return;}
+    const usingProxy=await _proxyAvailable();
+    if(!usingProxy&&!getApiKey()){
+      showNotDetected('No API key — open ⚙️ Debug panel to add your Groq key');
+      showToast('🔑','No Groq key — add one in Debug panel');
+      return;
+    }
     requestLog.push(Date.now());incDailyCount();
     const ai=await classifyWithRetry(base64);
     if(!ai.detected){showNotDetected(ai.reason);showToast('🔍',`Nothing detected`);return;}
@@ -2779,6 +2854,7 @@ async function doScan(){
     showToast(`${item.e}`,'Item detected → follow steps then confirm!');
   }catch(err){
     if(err.message==='no_camera'){showNotDetected('Camera access is blocked');}
+    else if(err.message==='no_key'){showNotDetected('No API key — add one in ⚙️ Debug panel');showToast('🔑','No Groq key — add one in Debug panel');}
     else{showNotDetected('AI scan failed — check connection');showToast('⚠️','Scan failed');dbgLog(`API error: ${err.message}`,'err');}
   }finally{scanning=false;lastScanAt=Date.now();startCooldownUI();}
 }
@@ -3034,7 +3110,16 @@ function openDebug(){
   document.getElementById('dbg-today-input').value=S.today;
   document.getElementById('dbg-items-input').value=S.items;
   document.getElementById('dbg-apikey-input').value=getApiKey();
-  updateApiKeyStatus();
+  // Show/hide proxy row based on detection
+  _proxyAvailable().then(hasProxy=>{
+    const proxyRow=document.getElementById('dbg-proxy-row');
+    const keyModeLbl=document.getElementById('dbg-key-mode-lbl');
+    if(proxyRow)proxyRow.style.display=hasProxy?'block':'none';
+    if(keyModeLbl)keyModeLbl.textContent=hasProxy
+      ?'Local override key (optional — proxy is active)' 
+      :'Local fallback key (used when no server proxy)';
+    updateApiKeyStatus();
+  });
   document.getElementById('dbg-overlay').classList.add('open');
   dbgLog('Opened debug panel','info');
 }
@@ -3048,16 +3133,60 @@ function refreshDbgStats(){
 function applyPoints(){const v=parseInt(document.getElementById('dbg-total-input').value);if(isNaN(v)||v<0)return;S.total=v;saveState();updateUI();refreshDbgStats();showToast('⚙️',`Total pts set to ${v.toLocaleString()}`);}
 function applyToday(){const v=parseInt(document.getElementById('dbg-today-input').value);if(isNaN(v)||v<0)return;S.today=v;saveState();updateUI();refreshDbgStats();showToast('⚙️',`Today pts set to ${v.toLocaleString()}`);}
 function applyItems(){const v=parseInt(document.getElementById('dbg-items-input').value);if(isNaN(v)||v<0)return;S.items=v;S.session=v;saveState();updateUI();refreshDbgStats();showToast('⚙️',`Items set to ${v}`);}
-function updateScanApiStatus(){
-  const el=document.getElementById('scan-api-status');if(!el)return;
-  const key=getApiKey();
-  if(key&&key.startsWith('gsk_')){el.style.color='#8cc63f';el.textContent='🔑 AI ready';}
-  else if(key){el.style.color='#e8960a';el.textContent='⚠️ Bad key format';}
-  else{el.style.color='#555';el.textContent='No API key set';}
+function applyApiKey(){
+  const raw=document.getElementById('dbg-apikey-input').value.trim();
+  if(!raw)return;
+  setApiKey(raw);updateApiKeyStatus();updateScanApiStatus();
+  showToast('🔑','Groq API key saved');
 }
-function applyApiKey(){const raw=document.getElementById('dbg-apikey-input').value.trim();if(!raw)return;setApiKey(raw);updateApiKeyStatus();updateScanApiStatus();showToast('🔑','Groq API key saved');}
-function clearApiKey(){localStorage.removeItem(APIKEY_KEY);document.getElementById('dbg-apikey-input').value='';updateApiKeyStatus();updateScanApiStatus();showToast('🔑','API key removed');}
-function updateApiKeyStatus(){const val=document.getElementById('dbg-apikey-input').value.trim(),saved=getApiKey(),el=document.getElementById('dbg-apikey-status');if(!val&&!saved){el.style.color='#ff6b6b';el.textContent='⚠️ No key set — AI scanning will fail';}else if(saved&&!val){el.style.color='#8cc63f';el.textContent=`✅ Saved key active (…${saved.slice(-6)})`;}else{el.style.color='#8cc63f';el.textContent=`✅ Groq key ready (${val.length} chars)`;}}
+function clearApiKey(){
+  localStorage.removeItem(APIKEY_KEY);
+  const inp=document.getElementById('dbg-apikey-input');
+  if(inp)inp.value='';
+  updateApiKeyStatus();updateScanApiStatus();
+  showToast('🔑','API key removed');
+}
+function updateApiKeyStatus(){
+  const el=document.getElementById('dbg-apikey-status');if(!el)return;
+  _proxyAvailable().then(hasProxy=>{
+    if(hasProxy){
+      el.style.color='#8cc63f';
+      el.textContent='✅ Proxy active — key secured in Vercel env vars';
+    } else {
+      const val=document.getElementById('dbg-apikey-input')?.value.trim()||'';
+      const saved=getApiKey();
+      if(!val&&!saved){el.style.color='#ff6b6b';el.textContent='⚠️ No key — AI scanning will fail';}
+      else if(saved&&!val){el.style.color='#8cc63f';el.textContent=`✅ Saved key active (…${saved.slice(-6)})`;}
+      else{el.style.color='#8cc63f';el.textContent=`✅ Key ready (${(val||saved).length} chars)`;}
+    }
+  });
+}
+async function checkProxyHealth(){
+  const statusEl=document.getElementById('dbg-apikey-status');
+  if(statusEl){statusEl.style.color='rgba(255,255,255,0.5)';statusEl.textContent='⏳ Testing /api/scan…';}
+  dbgLog('Testing proxy…','info');
+  try{
+    const pixel='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==';
+    const res=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:pixel})});
+    if(res.status===503){
+      if(statusEl){statusEl.style.color='#ff6b6b';statusEl.textContent='❌ Proxy up but GROQ_API_KEY not set in Vercel';}
+      dbgLog('GROQ_API_KEY not configured in Vercel env vars','err');
+    } else if(res.ok||res.status===429){
+      if(statusEl){statusEl.style.color='#8cc63f';statusEl.textContent='✅ Proxy working — GROQ_API_KEY configured';}
+      dbgLog('Proxy health check passed ✓','ok');
+    } else if(res.status===404){
+      if(statusEl){statusEl.style.color='#888';statusEl.textContent='ℹ️ No proxy found — using local key';}
+      dbgLog('No /api/scan proxy — local key mode','info');
+    } else {
+      const b=await res.json().catch(()=>({}));
+      if(statusEl){statusEl.style.color='#e8960a';statusEl.textContent=`⚠️ ${res.status}: ${b.error||res.statusText}`;}
+      dbgLog(`Proxy returned ${res.status}','warn`);
+    }
+  }catch(e){
+    if(statusEl){statusEl.style.color='#ff6b6b';statusEl.textContent=`❌ Network error: ${e.message}`;}
+    dbgLog(`Proxy unreachable: ${e.message}`,'err');
+  }
+}
 function dbgAddPts(n){S.total=Math.max(0,S.total+n);S.today=Math.max(0,S.today+n);saveState();updateUI();refreshDbgStats();showToast('⚙️',`${n>0?'+'+n:n} pts applied`);}
 function dbgQuickLogin(){
   // create/login a demo account
