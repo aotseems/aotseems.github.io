@@ -2378,7 +2378,7 @@ window.addEventListener('resize',()=>document.getElementById('rank-card').style.
 if(window.innerWidth>=768)document.getElementById('rank-card').style.display='block';
 
 /* ── CAMERA ─────────────────────────────── */
-let stream=null,scanning=false,camMirrored=true;
+let stream=null,scanning=false,camMirrored=false;
 async function startCam(){
   try{
     stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
