@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
   // 1. Set CORS headers so your GitHub Page can access this
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Or your specific GitHub URL
+  res.setHeader('Access-Control-Allow-Origin', 'https://github.com/aotseems/aotseems.github.io'); // Or your specific GitHub URL
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
