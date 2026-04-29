@@ -2247,7 +2247,7 @@ const ACCOUNTS_KEY='ecoscan_accounts_v1',SESSION_KEY='ecoscan_session_v1';
 function getApiKey(){return localStorage.getItem(APIKEY_KEY)||'';}
 function setApiKey(k){localStorage.setItem(APIKEY_KEY,k.trim());}
 
-  setApiKey( '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' );
+setApiKey( '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' );
 /* ── ACCOUNTS ───────────────────────────── */
 function getAllAccounts(){
   try{return JSON.parse(localStorage.getItem(ACCOUNTS_KEY)||'{}');}catch(e){return{};}
