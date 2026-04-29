@@ -2158,7 +2158,7 @@ function showNotDetected(reason){
   ['bin-compost','bin-recycle','bin-landfill','bin-general','bin-ewaste'].forEach(id=>document.getElementById(id).classList.remove('active'));
 }
 
-const SCAN_COOLDOWN_MS=10000,MAX_RPM=20,RPM_WINDOW_MS=60000,MAX_RPD=14000;
+const SCAN_COOLDOWN_MS=1000,MAX_RPM=20,RPM_WINDOW_MS=60000,MAX_RPD=14000;
 let lastScanAt=0,scanCooldownTimer=null;
 const requestLog=[];
 const DAILY_KEY='ecoscan_daily_v1';
