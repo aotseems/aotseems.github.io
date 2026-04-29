@@ -959,6 +959,119 @@ input,textarea,p,.bin-card-desc,.ac-quote,.guide-tip-body,.dp-body,.pc-desc{
 .g-float-txt{position:absolute;font-size:1.1rem;font-weight:900;pointer-events:none;z-index:30;animation:floatUp 0.9s ease forwards;white-space:nowrap;}
 #game-layout{transition:grid-template-columns 0.3s;}
 @media(max-width:900px){#game-layout{grid-template-columns:1fr!important;}}
+
+/* ═══ SETTINGS MODAL ═══ */
+.settings-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.5);
+  display:flex;align-items:flex-end;justify-content:center;
+  z-index:9500;opacity:0;pointer-events:none;transition:opacity 0.22s;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+.settings-overlay.open{opacity:1;pointer-events:all;}
+.settings-sheet{
+  background:#fff;border-radius:24px 24px 0 0;
+  width:100%;max-width:500px;
+  max-height:88vh;overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 -4px 40px rgba(0,0,0,0.2);
+  transform:translateY(100%);
+  transition:transform 0.3s cubic-bezier(0.34,1.05,0.64,1);
+  padding-bottom:calc(var(--safe-b) + 8px);
+}
+.settings-overlay.open .settings-sheet{transform:translateY(0);}
+.settings-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px 12px;
+  border-bottom:1px solid var(--gray1);
+  flex-shrink:0;
+}
+.settings-close-btn{
+  background:var(--gray1);border:none;border-radius:50%;
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:var(--gray7);cursor:pointer;
+  transition:background 0.15s;-webkit-tap-highlight-color:transparent;
+}
+.settings-close-btn:hover{background:var(--gray2);}
+/* handle bar */
+.settings-header::before{
+  content:'';display:block;width:36px;height:4px;border-radius:4px;
+  background:var(--gray2);position:absolute;top:8px;left:50%;transform:translateX(-50%);
+}
+.settings-body{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;padding:4px 0 8px;}
+.settings-section{padding:18px 20px;border-bottom:1px solid var(--gray1);}
+.settings-section:last-child{border-bottom:none;}
+.settings-section-label{font-size:0.68rem;font-weight:900;color:var(--gray5);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;}
+.settings-section-desc{font-size:0.78rem;color:var(--gray5);font-weight:600;line-height:1.5;margin-bottom:2px;}
+/* Range slider */
+.settings-scale-row{display:flex;align-items:center;gap:10px;margin-top:12px;}
+.settings-scale-icon{font-size:0.9rem;font-weight:900;color:var(--gray5);flex-shrink:0;}
+.settings-slider{
+  -webkit-appearance:none;appearance:none;
+  flex:1;height:6px;border-radius:6px;
+  background:linear-gradient(90deg,var(--g6) var(--fill,0%),var(--gray2) var(--fill,0%));
+  outline:none;cursor:pointer;
+}
+.settings-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:24px;height:24px;border-radius:50%;
+  background:#fff;border:3px solid var(--g6);
+  box-shadow:0 2px 8px rgba(0,0,0,0.15);
+  cursor:pointer;transition:transform 0.1s;
+}
+.settings-slider::-webkit-slider-thumb:active{transform:scale(1.2);}
+.settings-slider::-moz-range-thumb{
+  width:24px;height:24px;border-radius:50%;
+  background:#fff;border:3px solid var(--g6);
+  box-shadow:0 2px 8px rgba(0,0,0,0.15);
+  cursor:pointer;
+}
+/* Preset buttons */
+.settings-preset-btn{
+  border:1.5px solid var(--gray2);background:#fff;border-radius:8px;
+  padding:6px 12px;font-family:var(--fn);font-size:0.75rem;font-weight:800;
+  color:var(--gray7);cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:all 0.15s;touch-action:manipulation;
+}
+.settings-preset-btn.active,.settings-preset-btn:active{
+  background:var(--g1);border-color:var(--g6);color:var(--g8);
+}
+/* Camera buttons */
+.settings-cam-btn{
+  width:100%;border-radius:10px;padding:12px 16px;
+  font-family:var(--fn);font-size:0.85rem;font-weight:800;
+  cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent;
+  transition:all 0.15s;touch-action:manipulation;
+}
+.settings-cam-btn:active{transform:scale(0.98);}
+/* Toggle switch */
+.settings-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.settings-toggle{position:relative;display:inline-block;width:48px;height:28px;flex-shrink:0;}
+.settings-toggle input{opacity:0;width:0;height:0;position:absolute;}
+.settings-toggle-track{
+  position:absolute;inset:0;border-radius:14px;
+  background:var(--gray2);transition:background 0.2s;cursor:pointer;
+}
+.settings-toggle-track::after{
+  content:'';position:absolute;left:3px;top:3px;
+  width:22px;height:22px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.2);
+  transition:transform 0.2s;
+}
+.settings-toggle input:checked+.settings-toggle-track{background:var(--g6);}
+.settings-toggle input:checked+.settings-toggle-track::after{transform:translateX(20px);}
+/* Compact mode */
+body.compact-mode .card{padding:12px 14px;}
+body.compact-mode .scard{padding:10px 12px;}
+body.compact-mode .hero{padding:14px 16px;}
+/* Reduce motion */
+body.reduce-motion *,body.reduce-motion *::before,body.reduce-motion *::after{
+  animation-duration:0.01ms!important;
+  animation-iteration-count:1!important;
+  transition-duration:0.01ms!important;
+}
+@media(min-width:768px){
+  .settings-overlay{align-items:center;}
+  .settings-sheet{border-radius:20px;max-height:80vh;}
+}
 </style>
 </head>
 <body>
@@ -994,7 +1107,10 @@ input,textarea,p,.bin-card-desc,.ac-quote,.guide-tip-body,.dp-body,.pc-desc{
       <button class="uca-btn uca-profile" onclick="openAuth()">👤 Profile</button>
       <button class="uca-btn uca-logout" onclick="doLogout()">Sign out</button>
     </div>
-    <button class="debug-btn" onclick="openDebug()">⚙️ Debug / Reset</button>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <button class="debug-btn" style="flex:1;" onclick="openSettings()">⚙️ Settings</button>
+      <button class="debug-btn" style="flex:0 0 auto;padding:8px 10px;" onclick="openDebug()">🐛</button>
+    </div>
   </div>
 </aside>
 
@@ -1084,10 +1200,13 @@ input,textarea,p,.bin-card-desc,.ac-quote,.guide-tip-body,.dp-body,.pc-desc{
             <div class="cam-btns">
               <button class="cbtn cbtn-start" id="btn-start" onclick="startCam()">▶ Start</button>
               <button class="cbtn cbtn-scan" id="btn-scan" onclick="doScan()" disabled style="opacity:.4">🔍 Scan</button>
-              <button class="cbtn" id="btn-flip" onclick="flipCam()" title="Mirror camera" style="flex:0 0 44px;background:rgba(255,255,255,0.12);color:#aaa;">🔄</button>
+              <button class="cbtn" id="btn-flip" onclick="flipCam()" title="Switch camera" style="flex:0 0 48px;background:rgba(255,255,255,0.12);color:#ccc;font-size:1.1rem;">📷</button>
               <button class="cbtn cbtn-stop" id="btn-stop" onclick="stopCam()" disabled style="opacity:.4">■ Stop</button>
             </div>
-            <div id="scan-api-status" style="padding:6px 10px;background:#111;font-family:var(--fn);font-size:0.68rem;font-weight:700;text-align:center;"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 10px;background:#0d0d0d;">
+              <div id="cam-facing-lbl" style="font-family:var(--fn);font-size:0.65rem;font-weight:700;color:#666;">📷 Rear cam</div>
+              <div id="scan-api-status" style="font-family:var(--fn);font-size:0.65rem;font-weight:700;color:#555;text-align:right;"></div>
+            </div>
           </div>
           <div>
             <div class="shi-ttl">Scanned today</div>
@@ -1794,9 +1913,9 @@ input,textarea,p,.bin-card-desc,.ac-quote,.guide-tip-body,.dp-body,.pc-desc{
       <div class="more-drawer-icon">👤</div>
       <div class="more-drawer-lbl">Account</div>
     </button>
-    <button class="more-drawer-item" onclick="closeMoreDrawer();openDebug()" aria-label="Settings">
+    <button class="more-drawer-item" onclick="closeMoreDrawer();openSettings()" aria-label="Settings">
       <div class="more-drawer-icon">⚙️</div>
-      <div class="more-drawer-lbl">Debug</div>
+      <div class="more-drawer-lbl">Settings</div>
     </button>
   </div>
 </div>
@@ -1826,6 +1945,89 @@ input,textarea,p,.bin-card-desc,.ac-quote,.guide-tip-body,.dp-body,.pc-desc{
 </div>
 
 <div class="toast" id="toast">🌱 <span id="toast-msg"></span></div>
+
+<!-- ═══════════════════════════════════════
+     SETTINGS MODAL
+═══════════════════════════════════════ -->
+<div class="settings-overlay" id="settings-overlay" onclick="handleSettingsOverlayClick(event)">
+  <div class="settings-sheet" id="settings-sheet">
+    <div class="settings-header">
+      <div style="font-size:1.1rem;font-weight:900;color:var(--gray9);">⚙️ Settings</div>
+      <button class="settings-close-btn" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="settings-body">
+
+      <!-- UI SCALE -->
+      <div class="settings-section">
+        <div class="settings-section-label">Display size</div>
+        <div class="settings-section-desc">Adjust how large the interface appears. Changes apply instantly.</div>
+        <div class="settings-scale-row">
+          <span class="settings-scale-icon">A</span>
+          <input type="range" class="settings-slider" id="ui-scale-slider"
+            min="80" max="130" step="5" value="100"
+            oninput="applyUiScale(this.value)">
+          <span class="settings-scale-icon" style="font-size:1.4rem;">A</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;">
+          <span style="font-size:0.68rem;color:var(--gray5);font-weight:700;">80%</span>
+          <span style="font-size:0.72rem;font-weight:900;color:var(--g8);" id="ui-scale-lbl">100%</span>
+          <span style="font-size:0.68rem;color:var(--gray5);font-weight:700;">130%</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+          <button class="settings-preset-btn" onclick="applyUiScalePreset(80)">80% <span style="font-size:0.6rem;color:var(--gray5);">Compact</span></button>
+          <button class="settings-preset-btn" onclick="applyUiScalePreset(90)">90%</button>
+          <button class="settings-preset-btn active" id="preset-100" onclick="applyUiScalePreset(100)">100% <span style="font-size:0.6rem;color:var(--gray5);">Default</span></button>
+          <button class="settings-preset-btn" onclick="applyUiScalePreset(110)">110%</button>
+          <button class="settings-preset-btn" onclick="applyUiScalePreset(120)">120%</button>
+          <button class="settings-preset-btn" onclick="applyUiScalePreset(130)">130% <span style="font-size:0.6rem;color:var(--gray5);">Large</span></button>
+        </div>
+      </div>
+
+      <!-- CAMERA -->
+      <div class="settings-section">
+        <div class="settings-section-label">Camera</div>
+        <div class="settings-section-desc">Choose which camera to use for scanning. Mirror is automatic — front cam is always mirrored, rear is never.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+          <button class="settings-cam-btn" id="settings-cam-rear" onclick="settingsSwitchCam('environment')" style="border:2px solid var(--g6);background:var(--g1);color:var(--g8);">
+            📷 Rear camera <span style="font-size:0.68rem;font-weight:600;opacity:0.7;">· No mirror</span>
+          </button>
+          <button class="settings-cam-btn" id="settings-cam-front" onclick="settingsSwitchCam('user')" style="border:2px solid var(--gray2);background:var(--gray0);color:var(--gray7);">
+            🤳 Front camera <span style="font-size:0.68rem;font-weight:600;opacity:0.7;">· Auto-mirrored</span>
+          </button>
+        </div>
+        <div id="settings-cam-status" style="font-size:0.72rem;font-weight:700;color:var(--gray5);margin-top:8px;padding:8px 12px;background:var(--gray0);border-radius:8px;">
+          No camera active — go to Scan to start
+        </div>
+      </div>
+
+      <!-- APPEARANCE -->
+      <div class="settings-section">
+        <div class="settings-section-label">Appearance</div>
+        <div class="settings-toggle-row">
+          <div>
+            <div style="font-size:0.82rem;font-weight:700;color:var(--gray9);">Reduce animations</div>
+            <div style="font-size:0.7rem;color:var(--gray5);font-weight:600;margin-top:2px;">Turns off page transitions and motion effects</div>
+          </div>
+          <label class="settings-toggle">
+            <input type="checkbox" id="settings-reduce-motion" onchange="applyReduceMotion(this.checked)">
+            <span class="settings-toggle-track"></span>
+          </label>
+        </div>
+        <div class="settings-toggle-row" style="margin-top:10px;">
+          <div>
+            <div style="font-size:0.82rem;font-weight:700;color:var(--gray9);">Compact cards</div>
+            <div style="font-size:0.7rem;color:var(--gray5);font-weight:600;margin-top:2px;">Reduces padding in cards for more content density</div>
+          </div>
+          <label class="settings-toggle">
+            <input type="checkbox" id="settings-compact" onchange="applyCompact(this.checked)">
+            <span class="settings-toggle-track"></span>
+          </label>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════
      AUTH MODAL
@@ -2378,32 +2580,103 @@ window.addEventListener('resize',()=>document.getElementById('rank-card').style.
 if(window.innerWidth>=768)document.getElementById('rank-card').style.display='block';
 
 /* ── CAMERA ─────────────────────────────── */
-let stream=null,scanning=false,camMirrored=false;
-async function startCam(){
+let stream=null,scanning=false;
+let camFacing='environment'; // 'environment'=rear, 'user'=front
+let camHasMultiple=false;
+
+// Detect if device has multiple cameras
+navigator.mediaDevices.enumerateDevices&&navigator.mediaDevices.enumerateDevices().then(devices=>{
+  const cams=devices.filter(d=>d.kind==='videoinput');
+  camHasMultiple=cams.length>1;
+  const flipBtn=document.getElementById('btn-flip');
+  if(flipBtn)flipBtn.style.display=camHasMultiple?'':'none';
+}).catch(()=>{});
+
+function getCamMirror(){
+  // Rear camera: never mirror (correct real-world orientation)
+  // Front camera: always mirror (selfie-style, feels natural)
+  return camFacing==='user';
+}
+
+async function startCam(facing){
+  if(facing)camFacing=facing;
+  // Stop any existing stream first
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
   try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    // Use exact constraint for switching, ideal for initial start
+    const constraints={
+      video:{
+        facingMode:camFacing,
+        width:{ideal:1280},height:{ideal:720}
+      },
+      audio:false
+    };
+    stream=await navigator.mediaDevices.getUserMedia(constraints);
     const v=document.getElementById('cam-video');
     v.srcObject=stream;v.style.display='block';
-    v.classList.toggle('mirrored',camMirrored);
+    // Auto-mirror based on facing direction
+    const mirror=getCamMirror();
+    v.style.transform=mirror?'scaleX(-1)':'scaleX(1)';
+    v.style.webkitTransform=mirror?'scaleX(-1)':'scaleX(1)';
     document.getElementById('cam-ph').style.display='none';
     setCamBtns(true);
-    showToast('📷','Camera live! Point at any item and tap Scan.');
+    // Update flip button indicator
+    const flipBtn=document.getElementById('btn-flip');
+    if(flipBtn){
+      flipBtn.title=camFacing==='user'?'Switch to rear camera':'Switch to front camera';
+      flipBtn.innerHTML=camFacing==='user'?'🤳':'📷';
+    }
+    // Update facing indicator label
+    updateCamFacingLabel();
+    showToast('📷',camFacing==='user'?'Front camera — mirrored for you':'Rear camera on');
   }catch(e){
-    document.getElementById('cam-ph').innerHTML=`<div style="text-align:center;padding:16px;"><div style="font-size:2rem;margin-bottom:8px;">📵</div><div style="font-size:0.82rem;font-weight:700;color:#f87171;">Camera blocked</div><div style="font-size:0.7rem;color:#888;margin-top:4px;">Allow camera access</div></div>`;
-    setCamBtns(true);
+    const ph=document.getElementById('cam-ph');
+    ph.style.display='flex';
+    ph.innerHTML=`<div style="text-align:center;padding:16px;"><div style="font-size:2rem;margin-bottom:8px;">📵</div><div style="font-size:0.82rem;font-weight:700;color:#f87171;">Camera blocked</div><div style="font-size:0.7rem;color:#888;margin-top:4px;">Allow camera access in browser settings</div></div>`;
+    setCamBtns(false);
+    // Re-enable start button even on error
+    const sb=document.getElementById('btn-start');
+    if(sb){sb.disabled=false;sb.style.opacity='1';}
     showToast('📵','Camera blocked — allow access in browser settings.');
   }
 }
+
 function stopCam(){
   if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
-  const v=document.getElementById('cam-video');v.style.display='none';v.srcObject=null;
-  const ph=document.getElementById('cam-ph');ph.style.display='flex';
-  ph.innerHTML=`<div style="font-size:2.5rem;">📷</div><div style="font-size:0.85rem;font-weight:700;color:#777;text-align:center;">Camera stopped<br><span style="font-size:0.72rem;color:#555;">Tap Start to restart</span></div>`;
+  const v=document.getElementById('cam-video');
+  if(v){v.style.display='none';v.srcObject=null;v.style.transform='';v.style.webkitTransform='';}
+  const ph=document.getElementById('cam-ph');
+  if(ph){
+    ph.style.display='flex';
+    ph.innerHTML=`<div style="font-size:2.5rem;">📷</div><div style="font-size:0.85rem;font-weight:700;color:#777;text-align:center;">Camera stopped<br><span style="font-size:0.72rem;color:#555;">Tap Start to restart</span></div>`;
+  }
   setCamBtns(false);
 }
-function flipCam(){camMirrored=!camMirrored;const v=document.getElementById('cam-video');v.classList.toggle('mirrored',camMirrored);document.getElementById('btn-flip').style.color=camMirrored?'var(--t6)':'#aaa';}
+
+async function flipCam(){
+  if(!stream&&!camHasMultiple)return;
+  // Toggle facing mode
+  camFacing=camFacing==='environment'?'user':'environment';
+  if(stream){
+    // Restart with new facing
+    await startCam(camFacing);
+  }
+}
+
+function updateCamFacingLabel(){
+  const el=document.getElementById('cam-facing-lbl');
+  if(el)el.textContent=camFacing==='user'?'🤳 Front cam (mirrored)':'📷 Rear cam';
+}
+
 function setCamBtns(on){
-  ['btn-start','btn-scan','btn-stop'].forEach((id,i)=>{const b=document.getElementById(id),enabled=[!on,on,on][i];b.disabled=!enabled;b.style.opacity=enabled?'1':'0.4';});
+  const ids=['btn-start','btn-scan','btn-stop'];
+  ids.forEach((id,i)=>{
+    const b=document.getElementById(id);
+    if(!b)return;
+    const enabled=[!on,on,on][i];
+    b.disabled=!enabled;
+    b.style.opacity=enabled?'1':'0.4';
+  });
 }
 
 /* ── AI SCAN ─────────────────────────────── */
@@ -2417,9 +2690,11 @@ async function captureFrame(){
   const canvas=document.createElement('canvas');
   canvas.width=video.videoWidth||640;canvas.height=video.videoHeight||480;
   const ctx=canvas.getContext('2d');
-  if(camMirrored){ctx.translate(canvas.width,0);ctx.scale(-1,1);}
+  // For front camera: CSS mirrors it visually but we send the raw unmirrored
+  // frame to the AI — it can still identify objects correctly from a flipped image
+  // (items look the same mirrored). No transform needed on canvas.
   ctx.drawImage(video,0,0,canvas.width,canvas.height);
-  return canvas.toDataURL('image/jpeg',0.7).split(',')[1];
+  return canvas.toDataURL('image/jpeg',0.85).split(',')[1];
 }
 
 function aiResultToItem(ai){
@@ -2766,7 +3041,13 @@ function refreshDbgStats(){
 function applyPoints(){const v=parseInt(document.getElementById('dbg-total-input').value);if(isNaN(v)||v<0)return;S.total=v;saveState();updateUI();refreshDbgStats();showToast('⚙️',`Total pts set to ${v.toLocaleString()}`);}
 function applyToday(){const v=parseInt(document.getElementById('dbg-today-input').value);if(isNaN(v)||v<0)return;S.today=v;saveState();updateUI();refreshDbgStats();showToast('⚙️',`Today pts set to ${v.toLocaleString()}`);}
 function applyItems(){const v=parseInt(document.getElementById('dbg-items-input').value);if(isNaN(v)||v<0)return;S.items=v;S.session=v;saveState();updateUI();refreshDbgStats();showToast('⚙️',`Items set to ${v}`);}
-function updateScanApiStatus(){const el=document.getElementById('scan-api-status');if(!el)return;const key=getApiKey();if(key&&key.startsWith('gsk_')){el.style.color='#8cc63f';el.textContent=`🔑 Groq API key active — AI scanning ready`;}else if(key){el.style.color='#e8960a';el.textContent=`⚠️ Key format looks wrong — expected gsk_…`;}else{el.style.color='#ff6b6b';el.textContent=`⚠️ No API key — open ⚙️ Debug panel to add your Groq key`;}}
+function updateScanApiStatus(){
+  const el=document.getElementById('scan-api-status');if(!el)return;
+  const key=getApiKey();
+  if(key&&key.startsWith('gsk_')){el.style.color='#8cc63f';el.textContent='🔑 AI ready';}
+  else if(key){el.style.color='#e8960a';el.textContent='⚠️ Bad key format';}
+  else{el.style.color='#555';el.textContent='No API key set';}
+}
 function applyApiKey(){const raw=document.getElementById('dbg-apikey-input').value.trim();if(!raw)return;setApiKey(raw);updateApiKeyStatus();updateScanApiStatus();showToast('🔑','Groq API key saved');}
 function clearApiKey(){localStorage.removeItem(APIKEY_KEY);document.getElementById('dbg-apikey-input').value='';updateApiKeyStatus();updateScanApiStatus();showToast('🔑','API key removed');}
 function updateApiKeyStatus(){const val=document.getElementById('dbg-apikey-input').value.trim(),saved=getApiKey(),el=document.getElementById('dbg-apikey-status');if(!val&&!saved){el.style.color='#ff6b6b';el.textContent='⚠️ No key set — AI scanning will fail';}else if(saved&&!val){el.style.color='#8cc63f';el.textContent=`✅ Saved key active (…${saved.slice(-6)})`;}else{el.style.color='#8cc63f';el.textContent=`✅ Groq key ready (${val.length} chars)`;}}
@@ -3129,10 +3410,120 @@ function gameOver(){
   gameUpdateBestDisp();
 }
 
-// init display
-setTimeout(gameUpdateBestDisp,150);
+/* ═══════════════════════════════════════════════
+   SETTINGS
+═══════════════════════════════════════════════ */
+const SETTINGS_KEY='ecoscan_settings_v1';
+let appSettings={uiScale:100,reduceMotion:false,compact:false};
 
-/* ── SWIPE TO CLOSE MORE DRAWER ─────────── */
+function loadSettings(){
+  try{const s=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'null');if(s)appSettings=Object.assign(appSettings,s);}catch(e){}
+}
+function saveSettings(){localStorage.setItem(SETTINGS_KEY,JSON.stringify(appSettings));}
+
+function openSettings(){
+  loadSettings();
+  // Sync UI to current state
+  const slider=document.getElementById('ui-scale-slider');
+  if(slider)slider.value=appSettings.uiScale;
+  updateScaleSliderFill(appSettings.uiScale);
+  document.getElementById('ui-scale-lbl').textContent=appSettings.uiScale+'%';
+  document.getElementById('settings-reduce-motion').checked=appSettings.reduceMotion;
+  document.getElementById('settings-compact').checked=appSettings.compact;
+  updateSettingsPresetBtns(appSettings.uiScale);
+  updateSettingsCamStatus();
+  document.getElementById('settings-overlay').classList.add('open');
+}
+function closeSettings(){document.getElementById('settings-overlay').classList.remove('open');}
+function handleSettingsOverlayClick(e){if(e.target===document.getElementById('settings-overlay'))closeSettings();}
+
+function applyUiScale(val){
+  val=parseInt(val);
+  appSettings.uiScale=val;
+  saveSettings();
+  // Apply via zoom on the main element (works on both desktop and mobile)
+  document.documentElement.style.fontSize=(val/100)*16+'px';
+  // Also update sidebar width proportionally
+  document.getElementById('ui-scale-lbl').textContent=val+'%';
+  updateScaleSliderFill(val);
+  updateSettingsPresetBtns(val);
+}
+function applyUiScalePreset(val){
+  const slider=document.getElementById('ui-scale-slider');
+  if(slider)slider.value=val;
+  applyUiScale(val);
+}
+function updateScaleSliderFill(val){
+  const slider=document.getElementById('ui-scale-slider');
+  if(!slider)return;
+  const pct=(val-80)/(130-80)*100;
+  slider.style.setProperty('--fill',pct+'%');
+  slider.style.background=`linear-gradient(90deg,var(--g6) ${pct}%,var(--gray2) ${pct}%)`;
+}
+function updateSettingsPresetBtns(val){
+  document.querySelectorAll('.settings-preset-btn').forEach(b=>b.classList.remove('active'));
+  // Find and activate matching preset
+  const presets=[80,90,100,110,120,130];
+  presets.forEach(p=>{
+    const btns=document.querySelectorAll('.settings-preset-btn');
+    btns.forEach(b=>{if(b.textContent.trim().startsWith(p+'%'))b.classList.toggle('active',p===val);});
+  });
+}
+function applyReduceMotion(on){
+  appSettings.reduceMotion=on;saveSettings();
+  document.body.classList.toggle('reduce-motion',on);
+}
+function applyCompact(on){
+  appSettings.compact=on;saveSettings();
+  document.body.classList.toggle('compact-mode',on);
+}
+
+function settingsSwitchCam(facing){
+  camFacing=facing;
+  updateSettingsCamUI(facing);
+  // If camera is active, restart with new facing
+  if(stream)startCam(facing);
+  else showToast('📷',facing==='user'?'Front camera selected — go to Scan to start':'Rear camera selected');
+}
+function updateSettingsCamUI(facing){
+  const rearBtn=document.getElementById('settings-cam-rear');
+  const frontBtn=document.getElementById('settings-cam-front');
+  if(!rearBtn||!frontBtn)return;
+  if(facing==='environment'){
+    rearBtn.style.border='2px solid var(--g6)';rearBtn.style.background='var(--g1)';rearBtn.style.color='var(--g8)';
+    frontBtn.style.border='2px solid var(--gray2)';frontBtn.style.background='var(--gray0)';frontBtn.style.color='var(--gray7)';
+  } else {
+    frontBtn.style.border='2px solid var(--g6)';frontBtn.style.background='var(--g1)';frontBtn.style.color='var(--g8)';
+    rearBtn.style.border='2px solid var(--gray2)';rearBtn.style.background='var(--gray0)';rearBtn.style.color='var(--gray7)';
+  }
+}
+function updateSettingsCamStatus(){
+  const el=document.getElementById('settings-cam-status');
+  if(!el)return;
+  if(stream){
+    const track=stream.getVideoTracks()[0];
+    const settings=track?track.getSettings():{};
+    const facing=settings.facingMode||camFacing;
+    const label=track?track.label:'Unknown';
+    const mirrored=facing==='user';
+    el.innerHTML=`<span style="color:var(--g6);">● Active</span> · ${facing==='user'?'Front':'Rear'} cam${mirrored?' · <span style="color:var(--b6);">Mirrored</span>':''}<br><span style="font-size:0.65rem;color:var(--gray3);">${label.substring(0,40)}</span>`;
+  } else {
+    el.textContent='No camera active — go to Scan to start';
+    el.style.color='var(--gray5)';
+  }
+  updateSettingsCamUI(camFacing);
+}
+
+function applyAllSettings(){
+  loadSettings();
+  if(appSettings.uiScale!==100){
+    document.documentElement.style.fontSize=(appSettings.uiScale/100)*16+'px';
+  }
+  document.body.classList.toggle('reduce-motion',appSettings.reduceMotion);
+  document.body.classList.toggle('compact-mode',appSettings.compact);
+}
+
+// ── SWIPE TO CLOSE MORE DRAWER ─────────────
 (function(){
   let startY=0,startTime=0;
   const drawer=document.getElementById('more-drawer');
@@ -3141,8 +3532,20 @@ setTimeout(gameUpdateBestDisp,150);
   drawer.addEventListener('touchend',e=>{
     const dy=e.changedTouches[0].clientY-startY;
     const dt=Date.now()-startTime;
-    // swipe down fast enough = close
     if(dy>60&&dt<400)closeMoreDrawer();
+  },{passive:true});
+})();
+
+// ── SWIPE TO CLOSE SETTINGS ────────────────
+(function(){
+  let startY=0,startTime=0;
+  const sheet=document.getElementById('settings-sheet');
+  if(!sheet)return;
+  sheet.addEventListener('touchstart',e=>{startY=e.touches[0].clientY;startTime=Date.now();},{passive:true});
+  sheet.addEventListener('touchend',e=>{
+    const dy=e.changedTouches[0].clientY-startY;
+    const dt=Date.now()-startTime;
+    if(dy>60&&dt<400)closeSettings();
   },{passive:true});
 })();
 
@@ -3162,6 +3565,7 @@ setTimeout(gameUpdateBestDisp,150);
   updateScanApiStatus();
   renderLB();
   buildAvatarPicker();
+  applyAllSettings();
 
   // Prevent double-tap zoom on iOS (but keep tap)
   let lastTap=0;
